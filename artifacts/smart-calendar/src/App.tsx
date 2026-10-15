@@ -119,7 +119,7 @@ function AppFrame() {
 function SignIn() {
   const authState = new URLSearchParams(window.location.search).get('auth');
   const authMessage = authState === 'unconfigured'
-    ? 'Google sign-in is not configured yet. The app owner must add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET through Replit Secrets.'
+    ? 'Google sign-in is not set up yet. In Replit, open Tools → Secrets and add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET. Register this app’s /api/auth/google/callback URL in Google Cloud Console, then try again. Don’t paste these values here.'
     : authState === 'cancelled'
       ? 'Google sign-in was cancelled. No account was connected.'
       : authState === 'failed'

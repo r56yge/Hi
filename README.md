@@ -14,7 +14,7 @@ The Google OAuth client credentials belong to the app owner and must be stored a
    `https://YOUR-APP-HOST/api/auth/google/callback`
 
    Replace `YOUR-APP-HOST` with the app's actual HTTPS host. The URL must match exactly in Google Cloud Console and `GOOGLE_REDIRECT_URI`.
-5. Add these values through Replit's Secrets panel:
+5. In Replit, open **Tools → Secrets** and add these values:
 
    | Secret / variable | Purpose |
    | --- | --- |

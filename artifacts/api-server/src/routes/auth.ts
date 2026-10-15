@@ -29,11 +29,18 @@ const googleAuthLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-function appRedirect(req: Request, res: Response, state: string): void {
-  const origin = process.env.APP_ORIGIN ?? `${req.protocol}://${req.get("host")}`;
-  const url = new URL("/", origin);
-  url.searchParams.set("auth", state);
-  res.redirect(url.toString());
+function appRedirect(res: Response, state: string): void {
+  const sameOriginPath = `/?auth=${encodeURIComponent(state)}`;
+  if (process.env.APP_ORIGIN) {
+    try {
+      const url = new URL(sameOriginPath, process.env.APP_ORIGIN);
+      res.redirect(url.toString());
+      return;
+    } catch {
+      // An invalid optional origin should not send OAuth users to another host.
+    }
+  }
+  res.redirect(sameOriginPath);
 }
 
 function queryValue(value: unknown): string | undefined {
@@ -66,7 +73,7 @@ router.get("/auth/google", googleAuthLimiter, async (req, res): Promise<void> =>
     res.redirect(authUrl);
   } catch (error) {
     req.log.error({ error }, "Could not start Google OAuth");
-    appRedirect(req, res, "unconfigured");
+    appRedirect(res, "unconfigured");
   }
 });
 
@@ -79,12 +86,12 @@ router.get("/auth/google/callback", googleAuthLimiter, async (req, res): Promise
   delete req.session.oauthCodeVerifier;
 
   if (queryValue(req.query.error)) {
-    appRedirect(req, res, "cancelled");
+    appRedirect(res, "cancelled");
     return;
   }
   if (!code || !safeStateMatches(oauthState, state) || !codeVerifier) {
     req.log.warn("Rejected invalid Google OAuth callback state");
-    appRedirect(req, res, "failed");
+    appRedirect(res, "failed");
     return;
   }
 
@@ -148,10 +155,10 @@ router.get("/auth/google/callback", googleAuthLimiter, async (req, res): Promise
     await new Promise<void>((resolve, reject) => {
       req.session.save((error) => (error ? reject(error) : resolve()));
     });
-    appRedirect(req, res, "connected");
+    appRedirect(res, "connected");
   } catch (error) {
     req.log.error({ error }, "Google OAuth callback failed");
-    appRedirect(req, res, "failed");
+    appRedirect(res, "failed");
   }
 });
 
